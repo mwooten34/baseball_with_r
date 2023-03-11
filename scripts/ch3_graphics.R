@@ -105,7 +105,7 @@ ggplot(hof, aes(Era, hr_rate)) +
 #versions of the Lahman dataset
 
 data(Batting) #having lots of issues getting this in. str makes it useable data
-str(People)  #but data() did not
+data(People)  #but data() did not
 
 #Writing the get_birthyear function
 get_birthyear <- function(Name) {
@@ -124,3 +124,16 @@ PlayerInfo <- bind_rows(get_birthyear("Babe Ruth"),
                         get_birthyear("Hank Aaron"),
                         get_birthyear("Barry Bonds"),
                         get_birthyear("Alex Rodriguez"))
+
+Batting %>%
+  inner_join(PlayerInfo, by = 'playerID') %>%
+  mutate(Age = yearID - birthYear) %>%
+  select(Player, Age, HR) %>%
+  group_by(Player) %>%
+  mutate(CHR = cumsum(HR)) -> HRdata
+
+#Create line graph for payers HR by age
+ggplot(HRdata, aes(x = Age, y = CHR, linetype = Player)) +
+  geom_line()
+#ggsave(here("figs", "cumulative_hr_line.png"))
+
