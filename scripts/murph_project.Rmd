@@ -14,6 +14,7 @@ library(tidyverse)
 library(ggplot2)
 library(Lahman)
 library(here)
+library(ggrepel)
 ```
 
 
@@ -93,4 +94,35 @@ ggplot(career, aes(x=so9, y=reorder(player, so9))) +
 ```
 
 Max Scherzer and Randy Johnson are neck and neck here, but Mad Max edges him out and gets the points. I find it interesting that Walter Johnson, who pitched the most innings by far, is near the bottom of this list. It really shows the difference in the focus of different eras of baseball. 
+
+# 3.Control
+The flipside of strikeout potential, to me, is control. Lots of guys have top notch stuff or high end head, but they can't put it where they want it. Those players don't seen to stick around long enough to enter the conversation for **THE BEST**. Here, I want to look at BB/9 much like we looked at K/9 above. This will give a more digestible rate to compare. 
+
+```{r}
+ggplot(career, aes(x=bb9, y=reorder(player, -bb9))) +
+  geom_col() +
+   xlab("Career BB/9") +
+  ylab("Player") +
+  ggtitle("Career Walks per Nine Innings Pitched") +
+  geom_text(aes(label=bb9), hjust=0)
+
+```
+Christy Matthewson takes the cake for the least walks per nine innings. Strikeouts are great, but if you walk too many batters will end up doing damage at some point. For fun, let's look at the ratio of K/9 to BB/9 for all these guys and see what that tells us. 
+
+```{r}
+ggplot(career, aes(x=so9, y=bb9)) +
+  geom_point() +
+  geom_text_repel(aes(label = player)) +
+  xlab("K/9") +
+  ylab("BB/9") +
+  ggtitle("Career Strikeout and Walk Rates per Nine Innings") +
+  labs(caption = "Quadrant lines drawn at average K9 and BB9 for the players in question") +
+  geom_vline(xintercept = 8) + geom_hline(yintercept = 2.5) +
+  annotate("text", x=10, y=2.75, label="High Strikeout, High Walk", color = "blue")+
+  annotate("text", x=7, y=2, label="Low Strikeout, Low Walk", color = "blue") +
+  annotate("text", x=9.5, y=2, label="High Strikeout, Low Walk", color="blue") +
+  annotate("text", x=6, y=2.75, label="Low Strikeout, Low Walk", color = "blue")
+
+```
+
 
