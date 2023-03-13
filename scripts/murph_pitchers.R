@@ -39,7 +39,7 @@ PlayerInfo <- bind_rows(get_birthyear("Pedro Martinez"),
                         get_birthyear("Bob Gibson"),
                         get_birthyear("Tom Seaver"),
                         get_birthyear("Max Scherzer")) %>%
-  filter(!playerID %in% c("johnsra03", "johnsra04", "martipez03", "gibsobo01"))
+  filter(!playerID %in% c("johnsra03", "johnsra04", "martipez03", "gibsobo02"))
 
 #Pull together stats by player age
 Pitching %>%

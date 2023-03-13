@@ -1,0 +1,96 @@
+---
+title: "Pitcher Project"
+author: "Mark Wooten"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(Lahman)
+library(here)
+```
+
+
+# The Project
+What is this project and why am I doing it?
+
+# The Data
+Most of the data here comes from the wonderful Lahman database. I've used the pitchers table to get career stats for the top 10 pitchers as per Murph.  I grabbed a helpful function from the Analyzing Baseball Data with R book for getting the player birthyear so that we can eventually look at some stats for each player's age trajectory. Here's how we ended up with the current main dataset. 
+
+```{r}
+data("Pitching")
+data(PitchingPost)
+data("People")
+career <- read_csv(here("raw", "murph_pitchers_career.csv"))
+
+get_birthyear <- function(Name) {
+  Names <- unlist(strsplit(Name, " "))
+  People %>%
+    filter(nameFirst == Names[1],
+           nameLast == Names[2]) %>%
+    mutate(birthYear = ifelse(birthMonth >= 7,
+                              birthYear + 1, birthYear),
+           Player = paste(nameFirst, nameLast)) %>%
+    select(playerID, Player, birthYear)
+}
+
+PlayerInfo <- bind_rows(get_birthyear("Pedro Martinez"),
+                        get_birthyear("Greg Maddux"),
+                        get_birthyear("Christy Matthewson"),
+                        get_birthyear("Randy Johnson"),
+                        get_birthyear("Walter Johnson"),
+                        get_birthyear("Sandy Koufax"),
+                        get_birthyear("Clayton Kershaw"),
+                        get_birthyear("Bob Gibson"),
+                        get_birthyear("Tom Seaver"),
+                        get_birthyear("Max Scherzer")) %>%
+  filter(!playerID %in% c("johnsra03", "johnsra04", "martipez03", "gibsobo02"))
+
+Pitching %>%
+  inner_join(PlayerInfo, by = 'playerID') %>%
+  mutate(Age = yearID - birthYear) %>%
+  select(Player, Age, W, SO, BB, ERA, CG, SHO, IPouts) %>%
+  mutate(IP = round((IPouts/3), digits = 1)) %>%
+  group_by(Player) -> murph_pitchers
+
+```
+
+# Ranking System
+Evaluating pitchers is a difficult task. One that I'm far from an expert in. But I've devised a system for this project that I hope will make some sense to you reading. In this project, I will assign points to players in 5 categories: Longevity, Strikeout Potential, Control, Performance vs Peers, and Damage Limiting. In assigning these points, we'll look at the statistical categories of innings pitched, k/9, bb/9, career ERA+, and career ERA. Within each category, players will be ranked 1-10 with the top player receiving 10 points, the second player receiving 9 points, etc. Doing this for all categories will provide the player who excelled the most over all 5 categories and will provide us an objectively best pitcher. 
+
+# Analysis
+## 1. Longevity 
+The first category we'll look at is pitcher longevity. Lots of pitchers have come up and been great for a season or two, but part of being **THE BEST** is being able to do it over time. For this, the metric I've chosen is innings pitched. Let's see who comes out on top. 
+
+```{r}
+ggplot(career, aes(x=ip, y=reorder(player, ip))) +
+  geom_col() +
+   xlab("Innings Pitched") +
+  ylab("Player") +
+  ggtitle("Career Innings Pitched") +
+  geom_text(aes(label=ip), hjust=0)
+
+```
+ First points on the board for Walter Johnson. He pitched substantially more than any other player on this list. Definitely someone you'd want to have on your roster. You know you're gonna get reliable length out of a pitcher like this. 
+
+## 2.Strikeout Potential
+The next thing we want to examine is how good a pitcher is at getting strikeouts. This is a great skill for a pitcher to have since he can get outs without the ball ever entering play. Here we'll look at strikeouts per nine innings as a means of not giving extra advantage to pitchers who played longer and simply accumulated more stats. 
+```{r}
+
+ggplot(career, aes(x=so9, y=reorder(player, so9))) +
+  geom_col() +
+   xlab("Career K/9") +
+  ylab("Player") +
+  ggtitle("Career Strikeoutes per Nine Innings Pitched") +
+  geom_text(aes(label=so9), hjust=0)
+
+```
+
+Max Scherzer and Randy Johnson are neck and neck here, but Mad Max edges him out and gets the points. I find it interesting that Walter Johnson, who pitched the most innings by far, is near the bottom of this list. It really shows the difference in the focus of different eras of baseball. 
+
