@@ -15,16 +15,30 @@ library(ggplot2)
 library(Lahman)
 library(here)
 library(ggrepel)
+
+theme_set(theme_classic())
 ```
 
 
 # The Project
-What is this project and why am I doing it?
+I've always considered myself a datanerd, and a baseball fan, but I've done very little to put those two things together. Several years ago I picked up the book "Analyzing Baseball Data with R" and started working through it, but between work and other life events I didn't get very far. But this is a year of learning new things, and bringing skills up so I'm back at it! 
+
+In pursuit of this, I want to dive in and do some projects to try and get into the world of baseball analysis. To that end, I asked my friend Murph what his list of top 10 starting pitchers was so that I could try and do some work figuring out a way to determine who should be at the top of that list. This isn't necessarily an attempt to find the absolute best pitcher ever, but to find the order of the list provided. Here's the list of pitchers in question, as originally given to me in text message form:
+1. Pedro Martinez
+2. Greg Maddux
+3. Christy Matthewson
+4. Randy Johnson
+5. Walter Johnson
+6. Sandy Koufax
+7. Clayton Kershaw
+8. Bob Gibson
+9. Tom Seaver
+10. Max Scherzer
 
 # The Data
-Most of the data here comes from the wonderful Lahman database. I've used the pitchers table to get career stats for the top 10 pitchers as per Murph.  I grabbed a helpful function from the Analyzing Baseball Data with R book for getting the player birthyear so that we can eventually look at some stats for each player's age trajectory. Here's how we ended up with the current main dataset. 
+Most of the data here comes from the wonderful Lahman database. I've used the pitchers table to get career stats for the top 10 pitchers as per Murph.  I grabbed a helpful function from the Analyzing Baseball Data with R book for getting the player birthyear so that we can eventually look at some stats for each player's age trajectory. I also compiled some career statistics into a .csv directly from Baseball Reference. That will be used for a lot of the ranking metrics to come. Here's how we ended up with the current main dataset. 
 
-```{r}
+```{r, include=FALSE}
 data("Pitching")
 data(PitchingPost)
 data("People")
@@ -63,13 +77,13 @@ Pitching %>%
 ```
 
 # Ranking System
-Evaluating pitchers is a difficult task. One that I'm far from an expert in. But I've devised a system for this project that I hope will make some sense to you reading. In this project, I will assign points to players in 5 categories: Longevity, Strikeout Potential, Control, Performance vs Peers, and Damage Limiting. In assigning these points, we'll look at the statistical categories of innings pitched, k/9, bb/9, career ERA+, and career ERA. Within each category, players will be ranked 1-10 with the top player receiving 10 points, the second player receiving 9 points, etc. Doing this for all categories will provide the player who excelled the most over all 5 categories and will provide us an objectively best pitcher. 
+Evaluating pitchers is a difficult task. One that I'm far from an expert in. But I've devised a system for this project that I hope will make some sense to you reading. In this project, I will assign points to players in 5 categories: 1)Longevity, 2)Strikeout Potential, 3)Control, 4)Performance vs Peers, and 5)Damage Limiting. In assigning these points, we'll look at the statistical categories of innings pitched, k/9, bb/9, career ERA+, and career FIP. Within each category, players will be ranked 1-10 with the top player receiving 10 points, the second player receiving 9 points, etc. Doing this for all categories will provide the player who excelled the most over all 5 categories and will provide us an objectively best pitcher. 
 
 # Analysis
 ## 1. Longevity 
 The first category we'll look at is pitcher longevity. Lots of pitchers have come up and been great for a season or two, but part of being **THE BEST** is being able to do it over time. For this, the metric I've chosen is innings pitched. Let's see who comes out on top. 
 
-```{r}
+```{r echo=FALSE, fig.width=10}
 ggplot(career, aes(x=ip, y=reorder(player, ip))) +
   geom_col() +
    xlab("Innings Pitched") +
@@ -79,10 +93,23 @@ ggplot(career, aes(x=ip, y=reorder(player, ip))) +
 
 ```
  First points on the board for Walter Johnson. He pitched substantially more than any other player on this list. Definitely someone you'd want to have on your roster. You know you're gonna get reliable length out of a pitcher like this. 
-
-## 2.Strikeout Potential
-The next thing we want to examine is how good a pitcher is at getting strikeouts. This is a great skill for a pitcher to have since he can get outs without the ball ever entering play. Here we'll look at strikeouts per nine innings as a means of not giving extra advantage to pitchers who played longer and simply accumulated more stats. 
+ 
 ```{r}
+
+cumip <- murph_pitchers %>%
+  mutate(CIP = cumsum(IP)) %>%
+  filter(Player %in% c("Walter Johnson", "Greg Maddux", "Max Scherzer", "Clayton Kershaw"))
+
+ggplot(cumip, aes(x = Age, y = CIP, linetype = Player)) +
+  geom_line(aes(color = Player))
+
+```
+
+If we look at the career trajectories of the top two players in innings pitched (Johnson and Maddux) versus the two active players on the list (Kershaw and Scherzer) we can see a couple things. First, Scherzer is unlikely to reach the top of this list since he started later than the others. To accumulate something on the order of 5000 innings, you've got to play a looooong time. Secondly, we can see that Kershaw was on Maddux pace for the first part of his career. Sadly, though, injuries have knocked him off track so he too is unlikely to reach the top tier of this list. 
+
+## 2. Strikeout Potential
+The next thing we want to examine is how good a pitcher is at getting strikeouts. This is a great skill for a pitcher to have since he can get outs without the ball ever entering play. Here we'll look at strikeouts per nine innings as a means of not giving extra advantage to pitchers who played longer and simply accumulated more stats. 
+```{r, echo=FALSE, fig.width=10}
 
 ggplot(career, aes(x=so9, y=reorder(player, so9))) +
   geom_col() +
@@ -93,12 +120,26 @@ ggplot(career, aes(x=so9, y=reorder(player, so9))) +
 
 ```
 
-Max Scherzer and Randy Johnson are neck and neck here, but Mad Max edges him out and gets the points. I find it interesting that Walter Johnson, who pitched the most innings by far, is near the bottom of this list. It really shows the difference in the focus of different eras of baseball. 
+Fangraphs gives a helpful rule of thumb to interpret K9. Anything at 10 or above is excellent. They give 7.7 as average, and below 6 as poor. Max Scherzer and Randy Johnson are neck and neck here, but Mad Max edges him out and gets the points. I find it interesting that Walter Johnson, who pitched the most innings by far, is near the bottom of this list. It really shows the difference in the focus of different eras of baseball. 
 
-# 3.Control
-The flipside of strikeout potential, to me, is control. Lots of guys have top notch stuff or high end head, but they can't put it where they want it. Those players don't seen to stick around long enough to enter the conversation for **THE BEST**. Here, I want to look at BB/9 much like we looked at K/9 above. This will give a more digestible rate to compare. 
 
 ```{r}
+
+cumso <- murph_pitchers %>%
+  mutate(CSO = cumsum(SO)) %>%
+  filter(Player %in% c("Randy Johnson", "Pedro Martinez", "Max Scherzer", "Clayton Kershaw", "Sandy Koufax"))
+
+ggplot(cumso, aes(x = Age, y = CSO, linetype = Player)) +
+  geom_line(aes(color = Player)) +
+  geom_hline(yintercept = 3000)
+
+```
+
+
+## 3. Control
+The flipside of strikeout potential, to me, is control. Lots of guys have top notch stuff or high end head, but they can't put it where they want it. Those players don't seen to stick around long enough to enter the conversation for **THE BEST**. Here, I want to look at BB/9 much like we looked at K/9 above. This will give a more digestible rate to compare. 
+
+```{r, echo=FALSE, fig.width=10}
 ggplot(career, aes(x=bb9, y=reorder(player, -bb9))) +
   geom_col() +
    xlab("Career BB/9") +
@@ -107,9 +148,9 @@ ggplot(career, aes(x=bb9, y=reorder(player, -bb9))) +
   geom_text(aes(label=bb9), hjust=0)
 
 ```
-Christy Matthewson takes the cake for the least walks per nine innings. Strikeouts are great, but if you walk too many batters will end up doing damage at some point. For fun, let's look at the ratio of K/9 to BB/9 for all these guys and see what that tells us. 
+Strikeouts are great, but if you walk too many batters will end up doing damage at some point. Christy Matthewson takes the cake for the least walks per nine innings.  Fangraphs rule of thumb is that 1.5 BB9 is excellent, and 1.9 is great. Average is 2.9 and above 3.2 is below average. For fun, let's look at the ratio of K/9 to BB/9 for all these guys and see what that tells us. 
 
-```{r}
+```{r, echo=FALSE}
 ggplot(career, aes(x=so9, y=bb9)) +
   geom_point() +
   geom_text_repel(aes(label = player)) +
@@ -123,6 +164,40 @@ ggplot(career, aes(x=so9, y=bb9)) +
   annotate("text", x=9.5, y=2, label="High Strikeout, Low Walk", color="blue") +
   annotate("text", x=6, y=2.75, label="Low Strikeout, Low Walk", color = "blue")
 
+```
+
+## 4. Performance vs Peers
+In the next category we'll look at how good a pitcher was compared to his contemporaries. You can hardly be **THE BEST** if you aren't significantly above average in the seasons you play. To examine this, we'll look at ERA+ which is a normalized statistic. An ERA+ of 100 is league average, and any point above 100 is one percentage point better than average. All of these pitchers was well above league average for most of the seasons they played, but let's see who was the top of the heap. 
+
+```{r, echo=FALSE, fig.width=10}
+ggplot(career, aes(x=era_plus, y=reorder(player, era_plus))) +
+  geom_col() +
+   xlab("Career ERA+") +
+  ylab("Player") +
+  ggtitle("Career ERA+") +
+  geom_text(aes(label=era_plus), hjust=0)
+```
+
+## 5. Limiting Damage
+The final stat we'll look at in our assessment of **THE BEST** pitcher (as per Murph) is Fielding Independent Pitching (FIP). The more standard ERA might be more straightforward, but FIP theoretically takes out a little of the variation that is not dependent on the pitcher himself. I will note, that with this group the difference in career FIP vs ERA is very small. 
+
+```{r, echo=FALSE, fig.width=10}
+ggplot(career, aes(x=fip, y=reorder(player, -fip))) +
+  geom_col() +
+   xlab("Career FIP") +
+  ylab("Player") +
+  ggtitle("Career FIP") +
+  geom_text(aes(label=fip), hjust=0)
+```
+Just for fun, let's see if ERA changes the order any
+
+```{r, echo=FALSE, fig.width=10}
+ggplot(career, aes(x=era, y=reorder(player, -era))) +
+  geom_col() +
+   xlab("Career ERA") +
+  ylab("Player") +
+  ggtitle("Career ERA") +
+  geom_text(aes(label=era), hjust=0)
 ```
 
 
