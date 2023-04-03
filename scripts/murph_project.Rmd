@@ -24,21 +24,22 @@ theme_set(theme_classic())
 I've always considered myself a datanerd, and a baseball fan, but I've done very little to put those two things together. Several years ago I picked up the book "Analyzing Baseball Data with R" and started working through it, but between work and other life events I didn't get very far. But this is a year of learning new things, and bringing skills up so I'm back at it! 
 
 In pursuit of this, I want to dive in and do some projects to try and get into the world of baseball analysis. To that end, I asked my friend Murph what his list of top 10 starting pitchers was so that I could try and do some work figuring out a way to determine who should be at the top of that list. This isn't necessarily an attempt to find the absolute best pitcher ever, but to find the order of the list provided. Here's the list of pitchers in question, as originally given to me in text message form:
-1. Pedro Martinez
-2. Greg Maddux
-3. Christy Matthewson
-4. Randy Johnson
-5. Walter Johnson
-6. Sandy Koufax
-7. Clayton Kershaw
-8. Bob Gibson
-9. Tom Seaver
-10. Max Scherzer
+
+- Pedro Martinez
+- Greg Maddux
+- Christy Matthewson
+- Randy Johnson
+- Walter Johnson
+- Sandy Koufax
+- Clayton Kershaw
+- Bob Gibson
+- Tom Seaver
+- Max Scherzer
 
 # The Data
 Most of the data here comes from the wonderful Lahman database. I've used the pitchers table to get career stats for the top 10 pitchers as per Murph.  I grabbed a helpful function from the Analyzing Baseball Data with R book for getting the player birthyear so that we can eventually look at some stats for each player's age trajectory. I also compiled some career statistics into a .csv directly from Baseball Reference. That will be used for a lot of the ranking metrics to come. Here's how we ended up with the current main dataset. 
 
-```{r, include=FALSE}
+```{r, include=TRUE}
 data("Pitching")
 data(PitchingPost)
 data("People")
@@ -123,7 +124,7 @@ ggplot(career, aes(x=so9, y=reorder(player, so9))) +
 Fangraphs gives a helpful rule of thumb to interpret K9. Anything at 10 or above is excellent. They give 7.7 as average, and below 6 as poor. Max Scherzer and Randy Johnson are neck and neck here, but Mad Max edges him out and gets the points. I find it interesting that Walter Johnson, who pitched the most innings by far, is near the bottom of this list. It really shows the difference in the focus of different eras of baseball. 
 
 
-```{r}
+```{r, include=FALSE}
 
 cumso <- murph_pitchers %>%
   mutate(CSO = cumsum(SO)) %>%
@@ -137,7 +138,7 @@ ggplot(cumso, aes(x = Age, y = CSO, linetype = Player)) +
 
 
 ## 3. Control
-The flipside of strikeout potential, to me, is control. Lots of guys have top notch stuff or high end head, but they can't put it where they want it. Those players don't seen to stick around long enough to enter the conversation for **THE BEST**. Here, I want to look at BB/9 much like we looked at K/9 above. This will give a more digestible rate to compare. 
+The flipside of strikeout potential, to me, is control. Lots of guys have top notch stuff or high end heat, but they can't put it where they want it. Those players don't seen to stick around long enough to enter the conversation for **THE BEST**. Here, I want to look at BB/9 much like we looked at K/9 above. This will give a more digestible rate to compare. 
 
 ```{r, echo=FALSE, fig.width=10}
 ggplot(career, aes(x=bb9, y=reorder(player, -bb9))) +
@@ -167,7 +168,7 @@ ggplot(career, aes(x=so9, y=bb9)) +
 ```
 
 ## 4. Performance vs Peers
-In the next category we'll look at how good a pitcher was compared to his contemporaries. You can hardly be **THE BEST** if you aren't significantly above average in the seasons you play. To examine this, we'll look at ERA+ which is a normalized statistic. An ERA+ of 100 is league average, and any point above 100 is one percentage point better than average. All of these pitchers was well above league average for most of the seasons they played, but let's see who was the top of the heap. 
+In the next category we'll look at how good a pitcher was compared to his contemporaries. You can hardly be **THE BEST** if you aren't significantly above average in the seasons you play. To examine this, we'll look at ERA+ which is a normalized statistic. An ERA+ of 100 is league average, and any point above 100 is one percentage point better than average. All of these pitchers were well above league average for most of the seasons they played, but let's see who was the top of the heap. 
 
 ```{r, echo=FALSE, fig.width=10}
 ggplot(career, aes(x=era_plus, y=reorder(player, era_plus))) +
@@ -177,6 +178,8 @@ ggplot(career, aes(x=era_plus, y=reorder(player, era_plus))) +
   ggtitle("Career ERA+") +
   geom_text(aes(label=era_plus), hjust=0)
 ```
+
+Clayton Kershaw is at the top of this list which really shows how dominant peak Kershaw was. As he is still active and is unlikely to have anymore seasons near his peak performance, it is possible that he slips down this list by the time he retires. We'll have to check back in and see!
 
 ## 5. Limiting Damage
 The final stat we'll look at in our assessment of **THE BEST** pitcher (as per Murph) is Fielding Independent Pitching (FIP). The more standard ERA might be more straightforward, but FIP theoretically takes out a little of the variation that is not dependent on the pitcher himself. I will note, that with this group the difference in career FIP vs ERA is very small. 
@@ -200,4 +203,22 @@ ggplot(career, aes(x=era, y=reorder(player, -era))) +
   geom_text(aes(label=era), hjust=0)
 ```
 
+Christy Matthewson and Walter Johnson top the list for both FIP and ERA, with Kershaw and Koufax swapping in spots 3 and 4. 
 
+## Final Assessment
+So where do we land at the end of this experiment? Well, here is the list in order of total points: 
+
+1. Walter Johnson - 37
+2. Christy Matthewson - 36
+3. Clayton Kershaw - 33
+4. Pedro Martinez - 32
+5. Greg Maddux - 26
+5. Max Scherzer - 26
+7. Randy Johnson - 24
+8. Tom Seaver - 21
+9. Bob Gibson - 20
+9. Sandy Koufax - 20
+
+There you have it! The best pitcher of the best pitcher (in the list Murph provided) is Walter Johnson by and edge! There seem to be two distinct tiers here with one group above 30 points and one group decently below. Clayton Kershaw being in the this close to the top as an active player is very surprising to me. I assumed he would be further down, with the retired players taking the top spots. 
+
+Overall this was a very fun project to complete. I'm looking forward to the season getting going and trying to do more projects in this vein. I'd love any feedback for improving the analysis and reporting for future ideas! 
