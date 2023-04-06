@@ -238,3 +238,4 @@ raj4040 <- annotate_figure(raj4040,
 raj4040
 ```
 
+And there you have it! It's not much to brag about now, but I'm hoping that if we get the Acuna season I think we're in for it will be more and more interesting throughout the year. I'll obviously be updating the data going forward, but I'd also like to improve the structure/look of the charts and whatnot. If you'd like to check out the raw data or code, here's a link to the GitHub repo with all of the files [(https://github.com/mwooten34/baseball_with_r)]. Thanks for checking it out! 
