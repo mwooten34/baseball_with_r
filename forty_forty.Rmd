@@ -1,0 +1,240 @@
+---
+title: "40-40 Project"
+author: "Mark Wooten"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+## The Premise
+Baseball is back and so is Ronald Acuna Jr! I'm an unabashed Braves fan, and am extremely excited to watch a health RAJ play this year. In 2019, he fell just shy of reaching the mythical 40-40 club with a season of 41 homeruns but only 37 steals. The following year was the Covid shortened season, and in 2021 trajedy struck. Ronald was on track to have an incredible season, but had an unfortunate ACL tear shorty before the All Star break. 
+
+Acuna was able to return for a portion of the 2022 season, but it was obvious that he was not himself. You could see a distrust of the knee when swinging and running. He reported that some days it felt great and others it did not, so he could never really know what he was getting on any given day. But this year, everything seems to be healed and ready to do. Over the first five games, RAJ has shown why he is a top tier player. He's got power, he's got speed, he's got the arm, and this year I think everything will be on display for a full season. 
+
+I know it's early to be thinking about a player genuinely being on 40-40 pace, but if there's any player who I have real confidence in, it's Ronald Acuna. So, I would like to build some charts and graphs to help me compare this season to the 4 previously recorded 40-40 seasons in terms of pace through number of team games played. While it won't show much in the beginning, I hope that over the season it will help determine how realistically we can hope to see a 40 homerun 40 steal seaon (or heck, maybe even more!). 
+
+## The Data
+Data for this project comes primarily from Baseball Reference. To compile the game by game stats for each player I went to the game log page for their 40-40 season and pulled the game by game stats for home runs, steals, and a few other general stats that I thought might be useful. Baseball reference helpfully shows the number of games between appearances so that I could determine any team games where the player did not record a plate appearance. Where those games existed I added an entry into the player's season with zero's across the borad for all statistical categories. This allowed be to have a full season of games for each player. As the 2023 season is currently taking place, stats for RAJ will be updated regularly. 
+
+## The Process
+If we're going to be making visualizations with data, we're gonna need some packages to work with. Here's what I've got loaded up for this project: 
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(here)
+library(ggrepel)
+library(gridExtra)
+library(cowplot)
+library(ggpubr)
+```
+
+Next, we need to get the data into R so we can start working with it. 
+
+```{r}
+forty <- read_csv(here("raw", "40_40.csv"))
+```
+
+# Home Runs
+The first thing I'd like to do is create some visuals for understanding HR pace. I'll need to do some tidying of the data to get just what we need. I'll also be creating a variable for cumulative home runs (CHR) and a variable that for whether or not the player is RAJ. This will allow me to create a distinct line for Ronald that stands out among the other players. 
+
+```{r}
+forty_hr <- forty %>%
+  select(Player, HR, Game) %>%
+#  filter(Game < 5) %>%
+  group_by(Player) %>%
+  mutate(CHR = cumsum(HR),
+         RAJ = case_when(Player == "Ronald Acuna Jr" ~ "Yes",
+                           Player != "Ronald Acuna Jr" ~ "No"))
+```
+ You can see that I've commented out a line about filtering the number of games played. I've tried to make both a chart showing both the full season for previous 40-40 seasons (that's what I've settled on for right now) and a chart that shows the pace of all seasons through the current number of games played. With such few games, that one was a little confusing, but I might return to it once we've got more games in this season. 
+ 
+Now that we've got a home run focused dataset, let's get to graphing. First, I'll make a basic chart showing HR through games played for all players. I'll save that to a variable so that we can continue to build on it. 
+
+```{r}
+hr <- ggplot(forty_hr, aes(x = Game , y = CHR, group = Player)) +
+  geom_line(size = 1, aes(color = RAJ)) 
+```
+
+Before moving on, I'll make a second small data set with just the last data point in the series so that I cna use it for labeling the lines. 
+
+```{r}
+hr_end <- forty_hr %>%
+  group_by(Player) %>%
+  top_n(1, Game) 
+```
+
+With that done, let's get back to the chart! First I'll add our newly created end points as labels and remove the legend. I feel like the labels make it fairly obvious what we're looking at here. In this chunk I'll also add some a title and some axis labels, as well as set the scale colors to something a little better. Let's see what we've got so far!  
+```{r, fig.height=3, fig.width=5}
+
+#Add end point labels
+hr <- hr +
+  geom_label_repel(aes(label = Player), data = hr_end) +
+  theme(legend.position = "none")
+
+#Add titles and axis labels
+hr <- hr + 
+  labs(title = "Home Runs") +
+  xlab("Games Played") +
+  ylab("Cumulative Home Runs") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#Change the color scales
+hr <- hr +
+  scale_color_manual(values=c('Black','Red')) +
+  theme(plot.background = element_rect(fill = "navy"),
+        panel.background = element_rect(fill = "grey", colour = "grey50"),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        plot.title = element_text(size = rel(2), color = "red"),
+        axis.text = element_text(colour = "red"),
+        axis.title.y = element_text(size = rel(1.5), color = "red"),
+        axis.title.x = element_text(size = rel(1.5), color = "red"))
+
+hr
+```
+
+In addition to looking at the cumulative home runs per team game, I'd also like to see the home run rates for everyone. This should allow me look towards the future and see how quickly RAJ will reach the milestone and compare that to the 4 years where I know the player achieved the feat. For this, I'd like to calculate At Bats per Home Run (AB/HR) to get a simple metric for seeing how often a player hits a homer. So let's create that new dataset and variable. 
+
+```{r}
+ab_per_hr <- forty %>%
+  select(Player, HR, AB) %>%
+  group_by(Player) %>%
+  summarise(total_HR = sum(HR),
+            total_AB = sum(AB)) %>%
+  mutate(ABHR = round(total_AB/total_HR, 2))%>%
+  arrange(desc(ABHR)) 
+
+```
+
+Now that we have some data, let's chart it so we can see how the players stack up. 
+
+```{r, fig.width=10, fig.height=5}
+abhr <- ggplot(ab_per_hr, aes(x=ABHR, y=reorder(Player, -ABHR))) +
+  geom_col() +
+  xlab("At Bats per Home Run") +
+  ylab("Player") +
+  ggtitle("Number of At Bats per Home Run in 40/40 Season") +
+  geom_text(aes(label=ABHR), hjust=0) +
+  theme(plot.background = element_rect(fill = "navy"),
+        panel.background = element_rect(fill = "grey", colour = "grey50"),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        plot.title = element_text(size = rel(2), color = "red"),
+        axis.text = element_text(colour = "red"),
+        axis.title.y = element_text(size = rel(1.5), color = "red"),
+        axis.title.x = element_text(size = rel(1.5), color = "red"))
+
+abhr
+```
+
+After the first 4 games of the season, Ronald Acuna Jr is hitting a home run every 8.5 at bats. Of the 40-40 seasons on record, this would be by far the lowest time between home runs. I'm going to guess that this is unsustainable for a full season... 
+
+# Stolen Bases
+For stolen bases, I'm going to do functionally the same thing as I did for homeruns just subbing in a different variable. So let's get our dataset: 
+
+```{r}
+forty_sb <- forty %>%
+  select(Player, SB, Game) %>%
+#  filter(Game < 5) %>%
+  group_by(Player) %>%
+  mutate(CSB = cumsum(SB),
+         RAJ = case_when(Player == "Ronald Acuna Jr" ~ "Yes",
+                         Player != "Ronald Acuna Jr" ~ "No"))
+```
+
+And now let's make the graph for cumulative stolen bases:
+
+```{r, fig.height=3, fig.width=5}
+#Create General plot
+sb <- ggplot(forty_sb, aes(x = Game , y = CSB, group = Player)) +
+  geom_line(size = 1, aes(color = RAJ)) 
+
+#Create set of data ends for labeling end point of line
+sb_end <- forty_sb %>%
+  group_by(Player) %>%
+  top_n(1, Game) 
+
+#Add end point labels to graph
+sb <- sb +
+  geom_label_repel(aes(label = Player), data = sb_end) +
+  theme(legend.position = "none")
+
+#Add titles and axis labels
+sb <- sb + 
+  labs(title = "Stolen Bases") +
+  xlab("Games Played") +
+  ylab("Cumulative Stolen Bases") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#Change the color scales
+sb <- sb +
+  scale_color_manual(values=c('Black','Red')) +
+  theme(plot.background = element_rect(fill = "navy"),
+        panel.background = element_rect(fill = "grey", colour = "grey50"),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        plot.title = element_text(size = rel(2), color = "red"),
+        axis.text = element_text(colour = "red"),
+        axis.title.y = element_text(size = rel(1.5), color = "red"),
+        axis.title.x = element_text(size = rel(1.5), color = "red"))
+
+#Final Plot for SB
+sb
+```
+
+With that out of the way, let' look at the rate of stolen bases. I wasn't entirely sure what the best metric was for this, but I landed on plate appearances per stolen base. I saw that in a few places, but I'm open to modifying to something else going forward if there's a better way to think about that. Let me generate that dataset and chart. 
+
+```{r, fig.width=10, fig.height=5}
+pa_per_sb <- forty %>%
+  select(Player, SB, PA) %>%
+  group_by(Player) %>%
+  summarise(total_SB = sum(SB),
+            total_PA = sum(PA)) %>%
+  mutate(PASB = round(total_PA/total_SB, 2))%>%
+  arrange(desc(PASB))
+
+pasb <- ggplot(pa_per_sb, aes(x=PASB, y=reorder(Player, -PASB))) +
+  geom_col() +
+  xlab("Plate Appearances per Stolen Base") +
+  ylab("Player") +
+  labs(caption = "Data source: Baseball Reference")+
+  ggtitle("Number of Plate Appearances per Stolen Base in 40/40 Season") +
+  geom_text(aes(label=PASB), hjust=0) +
+  theme(plot.background = element_rect(fill = "navy"),
+        panel.background = element_rect(fill = "grey", colour = "grey50"),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        plot.title = element_text(size = rel(2), color = "red"),
+        axis.text = element_text(colour = "red"),
+        axis.title.y = element_text(size = rel(1.5), color = "red"),
+        axis.title.x = element_text(size = rel(1.5), color = "red"))
+
+pasb
+
+```
+
+This shows the opposite of the home run rate chart. Thus far, RAJ has the longest time between stolen bases. I would hope that this gets more in line with the others as the season progresses and he has a chance to run more, but we shall see. 
+
+# Putting It All Together
+The last thing I'd like to do is put all these graphics together into one cohesive picture. This way I can update throughout the season and share a single image that has everything in it. So let's arrange those charts to all hang together. 
+
+```{r, fig.width= 20, fig.height= 10, fig.show= 'hide'}
+
+raj4040 <- grid.arrange(hr, abhr, sb, pasb,
+             ncol = 3,
+             layout_matrix = cbind(c(1,3), c(2,4), c(2, 4)))
+
+raj4040 <- annotate_figure(raj4040,
+                top = text_grob("Ronald Acuna Jr 40/40 Watch",
+                                face = "bold",
+                                size = 45))
+
+
+```
+
+```{r, fig.width= 20, fig.height= 10}
+
+raj4040
+```
+
