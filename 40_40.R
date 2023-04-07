@@ -88,8 +88,7 @@ plotSB <- plotSB +
 
 #Add titles and axis labels
 plotSB <- plotSB + 
-  labs(title = "Stolen Bases",
-       caption = "Data source: Baseball Reference") +
+  labs(title = "Stolen Bases") +
   xlab("Games Played") +
   ylab("Cumulative Stolen Bases") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -113,15 +112,18 @@ plot_PASB <- ggplot(pa_per_sb, aes(x=PASB, y=reorder(Player, -PASB))) +
   geom_col() +
   xlab("Plate Appearances per Stolen Base") +
   ylab("Player") +
+  labs(caption = "Data source: Baseball Reference")+
   ggtitle("Number of Plate Appearances per Stolen Base in 40/40 Season") +
-  geom_text(aes(label=PASB), hjust=0)
+  geom_text(aes(label=PASB), hjust=0) 
 
-figure <- grid.arrange(plotHR, plotSB, plot_ABHR, plot_PASB, 
+raj4040 <- grid.arrange(plotHR, plotSB, plot_ABHR, plot_PASB, 
              ncol = 2, nrow = 2)
 
-annotate_figure(figure,
+raj4040 <- annotate_figure(raj4040,
                 top = text_grob("Ronald Acuna Jr 40/40 Watch",
                                 face = "bold",
-                                size = 20))
+                                size = 25))
+
+ggsave(here("figs", "raj4040.png"), width = 25, height = 20, bg = "white")
 
 
