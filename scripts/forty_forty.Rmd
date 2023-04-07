@@ -24,7 +24,7 @@ Acuna was able to return for a portion of the 2022 season, but it was obvious th
 I know it's early to be thinking about a player genuinely being on 40-40 pace, but if there's any player who I have real confidence in, it's Ronald Acuna. So, I would like to build some charts and graphs to help me compare this season to the 4 previously recorded 40-40 seasons in terms of pace through number of team games played. While it won't show much in the beginning, I hope that over the season it will help determine how realistically we can hope to see a 40 homerun 40 steal seaon (or heck, maybe even more!). 
 
 ## The Data
-Data for this project comes primarily from Baseball Reference. To compile the game by game stats for each player I went to the game log page for their 40-40 season and pulled the game by game stats for home runs, steals, and a few other general stats that I thought might be useful. Baseball reference helpfully shows the number of games between appearances so that I could determine any team games where the player did not record a plate appearance. Where those games existed I added an entry into the player's season with zero's across the borad for all statistical categories. This allowed be to have a full season of games for each player. As the 2023 season is currently taking place, stats for RAJ will be updated regularly. 
+Data for this project comes primarily from FanGraphs through the baseballr package, as well as through some manual updates from Baseball Reference. None of the players who previously achieved 40-40 played a full 162 game season, so all references to games played here is to player games played rather than through team games played. The difference should be minimal as the leas number of games played for any of the successful 40-40 players was 158. Using the baseballr package will allow me to much more easily update the RAJ stats without having to manually copy tables from BR and convert them to a .csv file. 
 
 ## The Process
 If we're going to be making visualizations with data, we're gonna need some packages to work with. Here's what I've got loaded up for this project: 
@@ -37,26 +37,54 @@ library(ggrepel)
 library(gridExtra)
 library(cowplot)
 library(ggpubr)
+library(baseballr)
 ```
 
 Next, we need to get the data into R so we can start working with it. 
 
 ```{r Data}
-forty <- read_csv(here("raw", "40_40.csv"))
-sbo <- read_csv(here("raw", "sbo.csv"))
+
+sbo <- read_csv(here("raw", "SBO.csv"))
+
+raj2023 <- fg_batter_game_logs(18401, year = 2023) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+jc1988 <- fg_batter_game_logs(1001918, year = 1988) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+bb1996 <- fg_batter_game_logs(1109, year = 1996) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+arod1998 <- fg_batter_game_logs(1274, year = 1998) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+as2006 <- fg_batter_game_logs(847, year = 2006) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+
+forty_forty <- do.call("rbind", list(raj2023, jc1988, bb1996, arod1998, as2006)) %>%
+  rename(Player = PlayerName)
 ```
 
 # Home Runs
 The first thing I'd like to do is create some visuals for understanding HR pace. I'll need to do some tidying of the data to get just what we need. I'll also be creating a variable for cumulative home runs (CHR) and a variable that for whether or not the player is RAJ. This will allow me to create a distinct line for Ronald that stands out among the other players. 
 
 ```{r Data subset for HR}
-forty_hr <- forty %>%
+forty_hr <- forty_forty %>%
   select(Player, HR, Game) %>%
 #  filter(Game < 5) %>%
   group_by(Player) %>%
-  mutate(CHR = cumsum(HR),
-         RAJ = case_when(Player == "Ronald Acuna Jr" ~ "Yes",
-                           Player != "Ronald Acuna Jr" ~ "No"))
+  mutate(CHR = cumsum(HR))
 ```
 You can see that I've commented out a line about filtering the number of games played. I've tried to make both a chart showing both the full season for previous 40-40 seasons (that's what I've settled on for right now) and a chart that shows the pace of all seasons through the current number of games played. With such few games, that one was a little confusing, but I might return to it once we've got more games in this season. 
  
@@ -99,7 +127,7 @@ hr
 In addition to looking at the cumulative home runs per team game, I'd also like to see the home run rates for everyone. This should allow me look towards the future and see how quickly RAJ will reach the milestone and compare that to the 4 years where I know the player achieved the feat. For this, I'd like to calculate At Bats per Home Run (AB/HR) to get a simple metric for seeing how often a player hits a homer. So let's create that new dataset and variable. 
 
 ```{r}
-ab_per_hr <- forty %>%
+ab_per_hr <- forty_forty %>%
   select(Player, HR, AB) %>%
   group_by(Player) %>%
   summarise(total_HR = sum(HR),
@@ -131,14 +159,14 @@ abhr <- abhr +
 abhr
 ```
 
-After the first 4 games of the season, Ronald Acuna Jr is hitting a home run at a much quicker rate than anyone else who went on to accomplish the 40-40. Somehow this rate seems unsustainable, but we'll see. 
+Hitting two home runs in the first couple of games set Ronald up for an unsustainable pace. As of 7 games, he's down the list a bit, but still in a reasonable spot. 
 
 
 # Stolen Bases
 For stolen bases, I'm going to do functionally the same thing as I did for homeruns just subbing in a different variable. So let's get our dataset: 
 
 ```{r}
-forty_sb <- forty %>%
+forty_sb <- forty_forty %>%
   select(Player, SB, Game) %>%
 #  filter(Game < 5) %>%
   group_by(Player) %>%
@@ -234,4 +262,7 @@ ggsave(here("figs", "raj4040_4.7.23.png"))
 And there you have it! It's not much to brag about now, but I'm hoping that if we get the Acuna season I think we're in for it will be more and more interesting throughout the year. I'll obviously be updating the data going forward, but I'd also like to improve the structure/look of the charts and whatnot. If you'd like to check out the raw data or code, here's a link to the GitHub repo with all of the files [(https://github.com/mwooten34/baseball_with_r)]. Thanks for checking it out! 
 
 # Updates
+
 Update 4/7/2023: After posting this over on r/sabermetrics I got a wonderful suggestion from u/ASpring27 about both the formatting of the charts and a better metric to use for thinking about stolen bases per opportunity. I updated the colors of the charts to align with team colors, and changed my stolen base rate metric from plate appearances per stolen base to stolen bases per stolen base opportunity. I think everything looks cleaner right now, and the stolen base metric makes more sense. 
+
+Update 4/7/2023: Added baseballr package to pull historical seasons and current season for Ronald Acuna Jr. through FanGraphs. Previously I had added games into the log to account for team games in which the player did not play so that everyone would have 162, but with the current setup the data will simply go by player games. I don't believe this will make a big difference. 
