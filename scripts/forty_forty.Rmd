@@ -23,7 +23,7 @@ Data for this project comes primarily from Baseball Reference. To compile the ga
 ## The Process
 If we're going to be making visualizations with data, we're gonna need some packages to work with. Here's what I've got loaded up for this project: 
 
-```{r}
+```{r Libraries Used}
 library(tidyverse)
 library(ggplot2)
 library(here)
@@ -35,14 +35,14 @@ library(ggpubr)
 
 Next, we need to get the data into R so we can start working with it. 
 
-```{r}
+```{r Data}
 forty <- read_csv(here("raw", "40_40.csv"))
 ```
 
 # Home Runs
 The first thing I'd like to do is create some visuals for understanding HR pace. I'll need to do some tidying of the data to get just what we need. I'll also be creating a variable for cumulative home runs (CHR) and a variable that for whether or not the player is RAJ. This will allow me to create a distinct line for Ronald that stands out among the other players. 
 
-```{r}
+```{r Data subset for HR}
 forty_hr <- forty %>%
   select(Player, HR, Game) %>%
 #  filter(Game < 5) %>%
@@ -55,26 +55,23 @@ forty_hr <- forty %>%
  
 Now that we've got a home run focused dataset, let's get to graphing. First, I'll make a basic chart showing HR through games played for all players. I'll save that to a variable so that we can continue to build on it. 
 
-```{r}
+```{r Basic HR Plot}
 hr <- ggplot(forty_hr, aes(x = Game , y = CHR, group = Player)) +
-  geom_line(size = 1, aes(color = RAJ)) 
+  geom_line(linewidth = 1, aes(color = Player)) 
 ```
 
-Before moving on, I'll make a second small data set with just the last data point in the series so that I cna use it for labeling the lines. 
+In the first iteration of this chart I had endpoint labels and lines that were all the same color except for Acunas. I've gotten several helpful suggestions to remove the end labels since they're a little cluttery and just have lines colored by player. This way you can track each player's season a little more easily. But, I don't love the default colors very much, so let's work on that before we move on. 
 
-```{r}
-hr_end <- forty_hr %>%
-  group_by(Player) %>%
-  top_n(1, Game) 
-```
+```{r Modify Line Colors}
 
-With that done, let's get back to the chart! First I'll add our newly created end points as labels and remove the legend. I feel like the labels make it fairly obvious what we're looking at here. In this chunk I'll also add some a title and some axis labels, as well as set the scale colors to something a little better. Let's see what we've got so far!  
-```{r, fig.height=3, fig.width=5}
-
-#Add end point labels
 hr <- hr +
-  geom_label_repel(aes(label = Player), data = hr_end) +
-  theme(legend.position = "none")
+  scale_color_manual(values=c('#005C5C','#14225A', '#FD5A1E', '#EFB21E', '#CE1141'))
+
+```
+
+I've now changed each player's line color to align with a color from the team they were with in their 40-40 season. Hopefully this will make the chart easier to read, but also fun! Now I'll add some general labels and remove the grid marks for a cleaner look. 
+
+```{r Add Titles and Labels}
 
 #Add titles and axis labels
 hr <- hr + 
@@ -83,17 +80,10 @@ hr <- hr +
   ylab("Cumulative Home Runs") +
   theme(plot.title = element_text(hjust = 0.5))
 
-#Change the color scales
+#Modify theme elements
 hr <- hr +
-  scale_color_manual(values=c('Black','Red')) +
-  theme(plot.background = element_rect(fill = "navy"),
-        panel.background = element_rect(fill = "grey", colour = "grey50"),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        plot.title = element_text(size = rel(2), color = "red"),
-        axis.text = element_text(colour = "red"),
-        axis.title.y = element_text(size = rel(1.5), color = "red"),
-        axis.title.x = element_text(size = rel(1.5), color = "red"))
-
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+        
 hr
 ```
 
@@ -110,27 +100,30 @@ ab_per_hr <- forty %>%
 
 ```
 
-Now that we have some data, let's chart it so we can see how the players stack up. 
+Now that we have some data, let's chart it so we can see how the players stack up.
 
 ```{r, fig.width=10, fig.height=5}
 abhr <- ggplot(ab_per_hr, aes(x=ABHR, y=reorder(Player, -ABHR))) +
-  geom_col() +
-  xlab("At Bats per Home Run") +
-  ylab("Player") +
-  ggtitle("Number of At Bats per Home Run in 40/40 Season") +
-  geom_text(aes(label=ABHR), hjust=0) +
-  theme(plot.background = element_rect(fill = "navy"),
-        panel.background = element_rect(fill = "grey", colour = "grey50"),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        plot.title = element_text(size = rel(2), color = "red"),
-        axis.text = element_text(colour = "red"),
-        axis.title.y = element_text(size = rel(1.5), color = "red"),
-        axis.title.x = element_text(size = rel(1.5), color = "red"))
+  geom_col(aes(fill=Player), show.legend = FALSE) 
+
+abhr<- abhr +
+  scale_fill_manual(values=c('#005C5C','#14225A', '#FD5A1E', '#EFB21E', '#CE1141'))
+  
+abhr <- abhr + 
+  labs(title = "At Bats per Home Run") +
+  xlab("Player") +
+  ylab("AB/HR") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#Modify theme elements
+abhr <- abhr +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 abhr
 ```
 
-After the first 4 games of the season, Ronald Acuna Jr is hitting a home run every 8.5 at bats. Of the 40-40 seasons on record, this would be by far the lowest time between home runs. I'm going to guess that this is unsustainable for a full season... 
+After the first 4 games of the season, Ronald Acuna Jr is hitting a home run at a much quicker rate than anyone else who went on to accomplish the 40-40. Somehow this rate seems unsustainable, but we'll see. 
+
 
 # Stolen Bases
 For stolen bases, I'm going to do functionally the same thing as I did for homeruns just subbing in a different variable. So let's get our dataset: 
