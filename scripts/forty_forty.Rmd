@@ -11,13 +11,14 @@ output:
     code_folding: hide
 ---
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ```
 
 ## The Premise
-Baseball is back and so is Ronald Acuna Jr! I'm an unabashed Braves fan, and am extremely excited to watch a health RAJ play this year. In 2019, he fell just shy of reaching the mythical 40-40 club with a season of 41 homeruns but only 37 steals. The following year was the Covid shortened season, and in 2021 trajedy struck. Ronald was on track to have an incredible season, but had an unfortunate ACL tear shorty before the All Star break. 
+Baseball is back and so is Ronald Acuna Jr! I'm an unabashed Braves fan, and am extremely excited to watch a health RAJ play this year. In 2019, he fell just shy of reaching the mythical 40-40 club with a season of 41 homeruns but only 37 steals. The following year was the Covid shortened season, and in 2021 tragedy struck. Ronald was on track to have an incredible season, but had an unfortunate ACL tear shorty before the All Star break. 
 
 Acuna was able to return for a portion of the 2022 season, but it was obvious that he was not himself. You could see a distrust of the knee when swinging and running. He reported that some days it felt great and others it did not, so he could never really know what he was getting on any given day. But this year, everything seems to be healed and ready to do. Over the first five games, RAJ has shown why he is a top tier player. He's got power, he's got speed, he's got the arm, and this year I think everything will be on display for a full season. 
 
@@ -95,7 +96,7 @@ hr <- ggplot(forty_hr, aes(x = Game , y = CHR, group = Player)) +
   geom_line(linewidth = 1, aes(color = Player)) 
 ```
 
-In the first iteration of this chart I had endpoint labels and lines that were all the same color except for Acunas. I've gotten several helpful suggestions to remove the end labels since they're a little cluttery and just have lines colored by player. This way you can track each player's season a little more easily. But, I don't love the default colors very much, so let's work on that before we move on. 
+In the first iteration of this chart I had endpoint labels and lines that were all the same color except for Acuna's. I've gotten several helpful suggestions to remove the end labels since they're a little cluttery and just have lines colored by player. This way you can track each player's season a little more easily. But, I don't love the default colors very much, so let's work on that before we move on. 
 
 ```{r Modify Line Colors}
 
@@ -159,7 +160,7 @@ abhr <- abhr +
 abhr
 ```
 
-Hitting two home runs in the first couple of games set Ronald up for an unsustainable pace. As of 7 games, he's down the list a bit, but still in a reasonable spot. 
+Ronald started off the season with two homeruns in short order, but has slowed way down since then. As of the beginning of May he is a fair bit off the pace for a 40 HR season. BUT, he is hitting the ball a lot and hitting it hard. If he can increase the launch angle a bit he could get right back on pace. There's still plenty of time!
 
 
 # Stolen Bases
@@ -246,7 +247,7 @@ raj4040 <- annotate_figure(raj4040,
                                 face = "bold",
                                 size = 25),
                 bottom = text_grob("Data courtesy of Baseball Reference \n
-                                  Current as of 4/4/2023"))
+                                  Current as of 4/30/2023"))
 
 
 ```
@@ -255,7 +256,7 @@ raj4040 <- annotate_figure(raj4040,
 
 raj4040
 
-ggsave(here("figs", "raj4040_4.7.23.png"))
+ggsave(here("figs", "raj4040_4.30.23.png"), bg = "white")
 ```
 
 ## Conclusion
@@ -266,3 +267,5 @@ And there you have it! It's not much to brag about now, but I'm hoping that if w
 Update 4/7/2023: After posting this over on r/sabermetrics I got a wonderful suggestion from u/ASpring27 about both the formatting of the charts and a better metric to use for thinking about stolen bases per opportunity. I updated the colors of the charts to align with team colors, and changed my stolen base rate metric from plate appearances per stolen base to stolen bases per stolen base opportunity. I think everything looks cleaner right now, and the stolen base metric makes more sense. 
 
 Update 4/7/2023: Added baseballr package to pull historical seasons and current season for Ronald Acuna Jr. through FanGraphs. Previously I had added games into the log to account for team games in which the player did not play so that everyone would have 162, but with the current setup the data will simply go by player games. I don't believe this will make a big difference. 
+
+Update 5/1/2023: We're 27 games in thus far and things have been interesting. Ronald is stealing right, left, and center which is promising for 40-40. He's also making a ton of hard contact. Unfortunately, a lot of that hard contact is going into the ground. He's going to need to get the ball in the air if there's any hope of getting to 40 HR. It's still really early in the season, but getting too far behind pace now might be tough to recover from. 
