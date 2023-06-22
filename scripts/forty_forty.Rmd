@@ -94,9 +94,14 @@ Now that we've got a home run focused dataset, let's get to graphing. First, I'l
 ```{r Basic HR Plot}
 hr <- ggplot(forty_hr, aes(x = Game , y = CHR, group = Player)) +
   geom_line(linewidth = 1, aes(color = Player)) 
+
+hr <- hr + 
+  geom_abline(intercept = 0.2469, slope = 0.2469)
 ```
 
 In the first iteration of this chart I had endpoint labels and lines that were all the same color except for Acuna's. I've gotten several helpful suggestions to remove the end labels since they're a little cluttery and just have lines colored by player. This way you can track each player's season a little more easily. But, I don't love the default colors very much, so let's work on that before we move on. 
+
+I've also added a reference line for the "perfect pace" through 162 games. That equates to somewhere around 1 HR every 4 games. This way you can see at a glance whether or not a player is above or below pace at any given moment. 
 
 ```{r Modify Line Colors}
 
@@ -121,6 +126,7 @@ hr <- hr +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = c(0.87, 0.25),
         legend.background = element_rect(fill = "white", color = "black"))
+
         
 hr
 ```
@@ -160,7 +166,57 @@ abhr <- abhr +
 abhr
 ```
 
-Ronald started off the season with two homeruns in short order, but has slowed way down since then. As of the beginning of May he is a fair bit off the pace for a 40 HR season. BUT, he is hitting the ball a lot and hitting it hard. If he can increase the launch angle a bit he could get right back on pace. There's still plenty of time!
+As of the beginning of June he is a fair bit off the pace for a 40 HR season. BUT, he is hitting the ball a lot and hitting it hard. If he can increase the launch angle a bit he could get right back on pace. There's still plenty of time!
+
+# Acuna v Acuna HR
+Before we move on from home runs, let's briefly look at Acuna vs himself. How does this season compare to Acuna's 2019 or 2021? 
+
+```{r}
+
+raj2019 <- fg_batter_game_logs(18401, year = 2019) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+raj2021 <- fg_batter_game_logs(18401, year = 2021) %>%
+  select(PlayerName, Date, HR, SB, AB) %>%
+  arrange(Date) %>%
+  mutate(Game = row_number())
+
+acuna_self <- do.call("rbind", list(raj2023, raj2019, raj2021)) %>%
+  rename(Player = PlayerName) %>%
+  mutate(Date = ymd(Date)) %>% 
+  mutate_at(vars(Date), funs(year, month, day)) %>%
+  rename(Year = year)
+  
+acuna_self$Year <- as.factor(acuna_self$Year)
+
+forty_hr_self <- acuna_self %>%
+  select(HR, Game, Year) %>%
+  group_by(Year) %>%
+  mutate(CHR = cumsum(HR))
+
+hr_self <- ggplot(forty_hr_self, aes(x = Game , y = CHR, group = Year)) +
+  geom_line(size = 1, (aes(color = Year))) +
+  geom_abline(intercept = 0.2469, slope = 0.2469) +
+  scale_color_manual(values=c('#CE1141','#13274F','#EAAA00')) 
+  
+hr_self <- hr_self + 
+  labs(title = "Home Runs") +
+  xlab("Games Played") +
+  ylab("Cumulative Home Runs") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+hr_self <- hr_self +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = c(0.87, 0.25),
+        legend.background = element_rect(fill = "white", color = "black"))
+
+hr_self
+
+```
+
+First off, man what a season he was having in 2021! Well above 40HR pace and no sign of slowing down. In 2019 he reached the mark but was below the pace for a significant portion of the season. In fact, the 2023 line looks strikingly similar to the 2019 one. This continues to give us hope of 40 HR this year!
 
 
 # Stolen Bases
@@ -182,6 +238,9 @@ And now let's make the graph for cumulative stolen bases:
 #Create General plot
 sb <- ggplot(forty_sb, aes(x = Game , y = CSB, group = Player)) +
   geom_line(size = 1, aes(color = Player)) 
+
+sb <- sb +
+  geom_abline(intercept = 0.2469, slope = 0.2469)
 
 sb <- sb +
   scale_color_manual(values=c('#005C5C','#14225A', '#FD5A1E', '#EFB21E', '#CE1141'))
@@ -234,6 +293,37 @@ sbr
 
 This shows the opposite of the home run rate chart. Thus far, RAJ has stolen the fewest bases that he's had opportunity to swipe. I would hope that this gets more in line with the others as the season progresses and he has a chance to run more, but we shall see. 
 
+# Ronald v Ronald: SB
+Just like with the HR's, let's take a look at a Ronald vs Ronald comparison. 
+
+```{r}
+
+forty_sb_self <- acuna_self %>%
+  select(SB, Game, Year) %>%
+  group_by(Year) %>%
+  mutate(CSB = cumsum(SB))
+
+sb_self <- ggplot(forty_sb_self, aes(x = Game , y = CSB, group = Year)) +
+  geom_line(size = 1, (aes(color = Year))) +
+  geom_abline(intercept = 0.2469, slope = 0.2469) +
+  scale_color_manual(values=c('#CE1141','#13274F','#EAAA00')) 
+  
+sb_self <- sb_self + 
+  labs(title = "Stolen Bases") +
+  xlab("Games Played") +
+  ylab("Cumulative Stolen Bases") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+sb_self <- sb_self +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = c(0.87, 0.25),
+        legend.background = element_rect(fill = "white", color = "black"))
+
+sb_self
+
+```
+
+
 # Putting It All Together
 The last thing I'd like to do is put all these graphics together into one cohesive picture. This way I can update throughout the season and share a single image that has everything in it. So let's arrange those charts to all hang together. 
 
@@ -247,7 +337,7 @@ raj4040 <- annotate_figure(raj4040,
                                 face = "bold",
                                 size = 25),
                 bottom = text_grob("Data courtesy of Baseball Reference \n
-                                  Current as of 4/30/2023"))
+                                  Current as of 6/1/2023"))
 
 
 ```
@@ -256,7 +346,7 @@ raj4040 <- annotate_figure(raj4040,
 
 raj4040
 
-ggsave(here("figs", "raj4040_4.30.23.png"), bg = "white")
+ggsave(here("figs", "raj4040_6.1.23.png"), bg = "white")
 ```
 
 ## Conclusion
@@ -269,3 +359,7 @@ Update 4/7/2023: After posting this over on r/sabermetrics I got a wonderful sug
 Update 4/7/2023: Added baseballr package to pull historical seasons and current season for Ronald Acuna Jr. through FanGraphs. Previously I had added games into the log to account for team games in which the player did not play so that everyone would have 162, but with the current setup the data will simply go by player games. I don't believe this will make a big difference. 
 
 Update 5/1/2023: We're 27 games in thus far and things have been interesting. Ronald is stealing right, left, and center which is promising for 40-40. He's also making a ton of hard contact. Unfortunately, a lot of that hard contact is going into the ground. He's going to need to get the ball in the air if there's any hope of getting to 40 HR. It's still really early in the season, but getting too far behind pace now might be tough to recover from. 
+
+Update 6/1/2023: Similar spot to the beginning of last month. RAJ had four homers in four games which was helpful, but he's still quite a bit off the pace. Contact has been good, but still a lot of balls on the ground. Hopefully with the aire getting warmer, we'll start to see more long fly outs become home runs! 
+
+Update 6/22/2023: Added reference lines in the line plots for both HR and SB. Provides easy way to see whether Acuna is above or below pace at any given time. This was thanks to several r/sabermetrics suggestions. Also added Ronald v Ronald plots comparing this year and his 2019/2021 seasons. 
