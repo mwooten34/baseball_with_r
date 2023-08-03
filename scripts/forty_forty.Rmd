@@ -20,12 +20,12 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 ## The Premise
 Baseball is back and so is Ronald Acuna Jr! I'm an unabashed Braves fan, and am extremely excited to watch a health RAJ play this year. In 2019, he fell just shy of reaching the mythical 40-40 club with a season of 41 homeruns but only 37 steals. The following year was the Covid shortened season, and in 2021 tragedy struck. Ronald was on track to have an incredible season, but had an unfortunate ACL tear shorty before the All Star break. 
 
-Acuna was able to return for a portion of the 2022 season, but it was obvious that he was not himself. You could see a distrust of the knee when swinging and running. He reported that some days it felt great and others it did not, so he could never really know what he was getting on any given day. But this year, everything seems to be healed and ready to go. Over the first five games, RAJ has shown why he is a top tier player. He's got power, he's got speed, he's got the arm, and this year I think everything will be on display for a full season. 
+Acuna was able to return for a portion of the 2022 season, but it was obvious that he was not himself. You could see a distrust of the knee when swinging and running. He reported that some days it felt great and others it did not, so he could never really know what he was getting on any given day. But this year, everything seems to be healed and ready to go. He's got power, he's got speed, he's got the arm, and this year I think everything will be on display for a full season. 
 
-I know it's early to be thinking about a player genuinely being on 40-40 pace, but if there's any player who I have real confidence in, it's Ronald Acuna. So, I would like to build some charts and graphs to help me compare this season to the 4 previously recorded 40-40 seasons in terms of pace through number of team games played. While it won't show much in the beginning, I hope that over the season it will help determine how realistically we can hope to see a 40 homerun 40 steal seaon (or heck, maybe even more!). 
+We're over halfway through the season at this point and he's making a real run at one of the most incredible seasons ever. So, I've built some charts and graphs to help me compare this season to the 4 previously recorded 40-40 seasons in terms of pace through number of team games played. So far, we've flown by 40 steals, but 40 home runs is probably going to come right down to the end. Whether Ronald makes it or not, this year has already been fantastic and incredibly fun to watch. But it sure would be nice to join the club... 
 
 ## The Data
-Data for this project comes primarily from FanGraphs through the baseballr package, as well as through some manual updates from Baseball Reference. None of the players who previously achieved 40-40 played a full 162 game season, so all references to games played here is to player games played rather than through team games played. The difference should be minimal as the leas number of games played for any of the successful 40-40 players was 158. Using the baseballr package will allow me to much more easily update the RAJ stats without having to manually copy tables from BR and convert them to a .csv file. 
+Data for this project comes primarily from FanGraphs through the baseballr package, as well as through some manual updates from Baseball Reference. None of the players who previously achieved 40-40 played a full 162 game season, so all references to games played here is to player games played rather than through team games played. The difference should be minimal as the least number of games played for any of the successful 40-40 players was 158. Using the baseballr package will allow me to much more easily update the RAJ stats without having to manually copy tables from BR and convert them to a .csv file. 
 
 ## The Process
 If we're going to be making visualizations with data, we're gonna need some packages to work with. Here's what I've got loaded up for this project: 
@@ -78,16 +78,14 @@ forty_forty <- do.call("rbind", list(raj2023, jc1988, bb1996, arod1998, as2006))
 ```
 
 # Home Runs
-The first thing I'd like to do is create some visuals for understanding HR pace. I'll need to do some tidying of the data to get just what we need. I'll also be creating a variable for cumulative home runs (CHR) and a variable that for whether or not the player is RAJ. This will allow me to create a distinct line for Ronald that stands out among the other players. 
+The first thing I'd like to do is create some visuals for understanding HR pace. I'll need to do some tidying of the data to get just what we need. I'll also be creating a variable for cumulative home runs (CHR).
 
 ```{r Data subset for HR}
 forty_hr <- forty_forty %>%
   select(Player, HR, Game) %>%
-#  filter(Game < 5) %>%
   group_by(Player) %>%
   mutate(CHR = cumsum(HR))
 ```
-You can see that I've commented out a line about filtering the number of games played. I've tried to make both a chart showing both the full season for previous 40-40 seasons (that's what I've settled on for right now) and a chart that shows the pace of all seasons through the current number of games played. With such few games, that one was a little confusing, but I might return to it once we've got more games in this season. 
  
 Now that we've got a home run focused dataset, let's get to graphing. First, I'll make a basic chart showing HR through games played for all players. I'll save that to a variable so that we can continue to build on it. 
 
@@ -166,7 +164,7 @@ abhr <- abhr +
 abhr
 ```
 
-As of the beginning of July he is a right on the pace for a 40 HR season. He is hitting the ball a lot and hitting it hard. Now that the summer heat is upon us, I expect even more balls to get out. 
+As of the beginning of August he is a little below the pace for a 40 HR season. He is hitting the ball a lot and hitting it hard. Now that the summer heat is upon us, I expect even more balls to get out. 
 
 # Ronald v Ronald: HR
 Before we move on from home runs, let's briefly look at Acuna vs himself. How does this season compare to Acuna's 2019 or 2021? 
@@ -214,7 +212,7 @@ hr_self <- hr_self +
 
 hr_self
 
-#ggsave(here("figs", "ronald_self_comp_hr_6.22.23.png"))
+ggsave(here("figs", "ronald_self_comp_hr_8.3.23.png"))
 
 ```
 
@@ -293,7 +291,7 @@ sbr
 
 ```
 
-Even though he's way above the pace line of the the other players, I think it's interesting that Alfonso Soriano stole more bases per opportunity than Ronald is so far. That's wild because it seems like Ronald is stealing every base he can! 
+Ronald's base stealing this year has been incredible. I know that we've got a pitch clock and slightly larger bases, but not everyone has 50+ steals. It seems like he has decided to really go for it and is running a lot. I don't know if I want him to do it forever (lots of injury potential for what is really only a small gain) but it's been fun to watch this year!
 
 # Ronald v Ronald: SB
 Just like with the HR's, let's take a look at a Ronald vs Ronald comparison. 
@@ -323,7 +321,7 @@ sb_self <- sb_self +
 
 sb_self
 
-ggsave(here("figs", "ronald self_comp_sb_7.1.23.png"))
+ggsave(here("figs", "ronald self_comp_sb_8.3.23.png"))
 
 ```
 
@@ -341,7 +339,7 @@ raj4040 <- annotate_figure(raj4040,
                                 face = "bold",
                                 size = 25),
                 bottom = text_grob("Data courtesy of Baseball Reference \n
-                                  Current as of 6/30/2023"))
+                                  Current as of 8/3/2023"))
 
 
 ```
@@ -350,11 +348,11 @@ raj4040 <- annotate_figure(raj4040,
 
 raj4040
 
-ggsave(here("figs", "raj4040_7.1.23.png"), bg = "white")
+ggsave(here("figs", "raj4040_8.3.23.png"), bg = "white")
 ```
 
 ## Conclusion
-And there you have it! Coming up on the halfway point, it's looking like this is actually possible. When I started this earlier in the year I wasn't sure, but it's been such an incredible first half. Really looking forward to the second half to see if Ronald can keep this up! If you'd like to check out the raw data or code, here's a link to the GitHub repo with all of the files [(https://github.com/mwooten34/baseball_with_r)]. Thanks for checking it out! 
+And there you have it! Getting past the halfway point, it's looking like this is actually possible. When I started this earlier in the year I wasn't sure, but it's been such an incredible first half. Really looking forward to the second half to see if Ronald can keep this up! If you'd like to check out the raw data or code, here's a link to the GitHub repo with all of the files [(https://github.com/mwooten34/baseball_with_r)]. Thanks for checking it out! 
 
 # Updates
 
